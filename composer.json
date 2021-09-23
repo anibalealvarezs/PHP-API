@@ -16,7 +16,7 @@
     "type": "library",
     "require": {
         "php": ">=7.1",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^7.3",
         "onoi/cache": "^1.2",
         "nesbot/carbon": "~1"
     },
