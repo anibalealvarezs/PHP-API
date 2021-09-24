@@ -32,12 +32,21 @@ class YourClass
 
 #### Using This Method (Laravel)
 
-Laravel makes it very easy to use singletons using the `make` method. Open up the `app.php` file in the `bootstrap` folder at the root of your project directory and add the following piece of code.
+Laravel makes it very easy to use singletons using the `make` method. You just have to register the singleton in a service provider.
 
 ```php
-$app->singleton(PaladinsDev\PHP\PaladinsAPI::class, function() {
-    return PaladinsDev\PHP\PaladinsAPI::getInstance(env('PALADINS_DEVID'), env('PALADINS_AUTHKEY'), $cacheDriver);
-});
+use PaladinsDev\PHP\PaladinsAPI;
+
+$this->app->singleton(
+    PaladinsAPI::class,
+    function ($app) {
+        return new PaladinsAPI(
+            $app->make(
+                PaladinsAPI::getInstance(env('PALADINS_DEVID'), env('PALADINS_AUTHKEY'), $cacheDriver)
+            )
+        );
+    }
+);
 ```
 
 This assumes you have two environment variables `PALADINS_DEVID` and `PALADINS_AUTHKEY`.
