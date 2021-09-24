@@ -3,6 +3,9 @@
 namespace PaladinsDev\PHP;
 
 use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Onoi\Cache\Cache;
 use PaladinsDev\PHP\Exceptions\PaladinsException;
 use PaladinsDev\PHP\Exceptions\SessionException;
@@ -51,14 +54,14 @@ class PaladinsAPI
     /**
      * The Guzzle client used to make requests.
      *
-     * @var \GuzzleHttp\Client
+     * @var Client
      */
     private $guzzleClient;
 
     /**
      * The cache driver we interact with
      *
-     * @var \Onoi\Cache\Cache
+     * @var Cache
      */
     private $cache;
 
@@ -89,19 +92,19 @@ class PaladinsAPI
         $this->authKey      = $authKey;
         $this->cache        = $cacheDriver;
         $this->languageId   = 1;
-        $this->apiUrl       = 'http://api.paladins.com/paladinsapi.svc';
-        $this->guzzleClient = new \GuzzleHttp\Client;
+        $this->apiUrl       = 'https://api.paladins.com/paladinsapi.svc';
+        $this->guzzleClient = new Client;
     }
 
     /**
      * Get the current instance of the Paladins API. Useful for singleton based applications.
      *
-     * @param string $devId
-     * @param string $authKey
-     * @param \Onoi\Cache\Cache $cacheDriver
+     * @param string|null $devId
+     * @param string|null $authKey
+     * @param Cache|null $cacheDriver
      * @return PaladinsAPI
      */
-    public static function getInstance(string $devId = null, string $authKey = null, Cache $cacheDriver = null)
+    public static function getInstance(string $devId = null, string $authKey = null, Cache $cacheDriver = null): PaladinsAPI
     {
         if (!isset(self::$instance)) {
             self::$instance = new self($devId, $authKey, $cacheDriver);
@@ -151,6 +154,7 @@ class PaladinsAPI
      * @param integer $queue
      * @return mixed
      * @codeCoverageIgnore
+     * @throws SessionException
      */
     public function getRankedLeaderboard(int $tier, int $season, int $queue)
     {
@@ -178,12 +182,12 @@ class PaladinsAPI
      * @param mixed $date
      * @param integer $queue
      * @return mixed
-     * 
+     *
      * @codeCoverageIgnore
      */
     public function getMatchIdsByQueue(string $hour, $date, int $queue = 424)
     {
-        return $this->makeRequest("{$this->apiUrl}/getmatchidsbyqueueJson/{$this->devId}/{$this->getSignature('getmatchidsbyqueue')}/{$this->getSession()}/{$this->getTimestamp()}/{$queue}/{$date}/{$hour}");
+        return $this->makeRequest("$this->apiUrl/getmatchidsbyqueueJson/$this->devId/{$this->getSignature('getmatchidsbyqueue')}/{$this->getSession()}/{$this->getTimestamp()}/$queue/$date/$hour");
     }
 
     /**
@@ -251,6 +255,7 @@ class PaladinsAPI
      * @param mixed $player
      * @param int $platform
      * @return mixed
+     * @throws PaladinsException
      */
     public function getPlayer($player, int $platform = 5)
     {
@@ -263,12 +268,12 @@ class PaladinsAPI
             $players = $this->getPlayerIdByName($player);
 
             if (!empty($players)) {
-                $firstPlayer = Arr::first($players, function($value, $key) use ($platform) {
+                $firstPlayer = Arr::first($players, function($value) use ($platform) {
                     return $value['portal_id'] == $platform;
-                }, null);
+                });
             }
 
-            if (!isset($firstPlayer) || is_null($firstPlayer)) {
+            if (!isset($firstPlayer)) {
                 throw new PaladinsException('The requested player could not be found in the Paladins system.');
             } else {
                 $player = $firstPlayer['player_id'];
@@ -445,17 +450,18 @@ class PaladinsAPI
      * Get the current session id, or set it if it's not set.
      *
      * @return string
-     * 
+     *
      * @codeCoverageIgnore
+     * @throws SessionException|GuzzleException
      */
-    private function getSession()
+    private function getSession(): string
     {
         if (isset($this->cache)) {
             $cacheId = 'paladinsdev.php-api.sessionId';
         
             if (!$this->cache->contains($cacheId) || $this->cache->fetch($cacheId) == null) {
                 try {
-                    $response = $this->guzzleClient->get("{$this->apiUrl}/createsessionJson/{$this->devId}/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
+                    $response = $this->guzzleClient->get("$this->apiUrl/createsessionJson/$this->devId/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
                     $body = json_decode($response->getBody(), true);
 
                     if ($body['ret_msg'] != 'Approved' || !isset($body['session_id'])) {
@@ -465,7 +471,7 @@ class PaladinsAPI
 
                         return $this->cache->fetch($cacheId);
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     throw new SessionException($e->getMessage());
                 }
             } else {
@@ -474,7 +480,7 @@ class PaladinsAPI
         } else {
             if (Carbon::now()->greaterThan($this->sessionExpiresAt) || !isset($this->sessionExpiresAt)) {
                 try {
-                    $response = $this->guzzleClient->get("{$this->apiUrl}/createsessionJson/{$this->devId}/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
+                    $response = $this->guzzleClient->get("$this->apiUrl/createsessionJson/$this->devId/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
                     $body = json_decode($response->getBody(), true);
 
                     if ($body['ret_msg'] != 'Approved' || !isset($body['session_id'])) {
@@ -485,7 +491,7 @@ class PaladinsAPI
 
                         return $this->sessionId;
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     throw new SessionException($e->getMessage());
                 }
             } else {
@@ -495,7 +501,7 @@ class PaladinsAPI
 
         // if (!Cache::has($cacheId) || Cache::get($cacheId) == null) {
         //     try {
-        //         $response = $this->guzzleClient->get("{$this->apiUrl}/createsessionJson/{$this->devId}/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
+        //         $response = $this->guzzleClient->get("$this->apiUrl/createsessionJson/$this->devId/{$this->getSignature('createsession')}/{$this->getTimestamp()}");
         //         $body = json_decode($response->getBody(), true);
 
         //         if ($body['ret_msg'] != 'Approved' || !isset($body['session_id'])) {
@@ -520,7 +526,7 @@ class PaladinsAPI
      * 
      * @codeCoverageIgnore
      */
-    private function getTimestamp()
+    private function getTimestamp(): string
     {
         return Carbon::now('UTC')->format('YmdHi') . '00';
     }
@@ -533,7 +539,7 @@ class PaladinsAPI
      * 
      * @codeCoverageIgnore
      */
-    private function getSignature(string $method)
+    private function getSignature(string $method): string
     {
         return md5($this->devId . $method . $this->authKey . $this->getTimestamp());
     }
@@ -541,20 +547,21 @@ class PaladinsAPI
     /**
      * Build the proper URL for a variety of methods.
      *
-     * @param string $method
+     * @param string|null $method
      * @param mixed $player
-     * @param integer $lang
-     * @param integer $match_id
-     * @param integer $champ_id
-     * @param integer $queue
-     * @param integer $tier
-     * @param integer $season
-     * @param integer $platform
+     * @param int|null $lang
+     * @param int|null $match_id
+     * @param int|null $champ_id
+     * @param int|null $queue
+     * @param int|null $tier
+     * @param int|null $season
+     * @param int|null $platform
      * @return string
-     * 
+     *
+     * @throws SessionException|GuzzleException
      * @codeCoverageIgnore
      */
-    private function buildUrl(string $method = null, $player = null, int $lang = null, int $match_id = null, int $champ_id = null, int $queue = null, int $tier = null, int $season = null, int $platform = null)
+    private function buildUrl(string $method = null, $player = null, int $lang = null, int $match_id = null, int $champ_id = null, int $queue = null, int $tier = null, int $season = null, int $platform = null): string
     {
         $baseUrl = $this->apiUrl . '/' . $method . 'Json/' . $this->devId . '/' . $this->getSignature($method) . '/' . $this->getSession() . '/' . $this->getTimestamp();
 
@@ -574,8 +581,13 @@ class PaladinsAPI
      * Makes the request to the API and error checks it as well.
      *
      * @param string $url
+     * @param int|null $maxTries
+     * @param int|null $tries
      * @return mixed
-     * 
+     *
+     * @throws GuzzleException
+     * @throws NotFoundException
+     * @throws PaladinsException
      * @codeCoverageIgnore
      */
     private function makeRequest(string $url, int $maxTries = null, int $tries = null)
