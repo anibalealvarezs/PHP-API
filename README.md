@@ -18,15 +18,14 @@ There are two ways of using the class, however only 1 recommended. The singleton
 ### Recommended (Singleton)
 
 ```php
-<?php
 use PaladinsDev\PHP\PaladinsAPI;
 
 class YourClass
 {
-	public function getSomePlayer()
-	{
-		$playerDetails =  PaladinsAPI::getInstance('YourDevId', 'YourDevAuthKey', $cacheDriver)->getPlayer('SomePlayer');
-	}
+    public function getSomePlayer()
+    {
+        $playerDetails = PaladinsAPI::getInstance('YourDevId', 'YourDevAuthKey', $cacheDriver)->getPlayer('SomePlayer');
+    }
 }
 ```
 
@@ -40,17 +39,24 @@ use PaladinsDev\PHP\PaladinsAPI;
 $this->app->singleton(
     PaladinsAPI::class,
     function ($app) {
-        return new PaladinsAPI(
-            $app->make(
-                PaladinsAPI::getInstance(env('PALADINS_DEVID'), env('PALADINS_AUTHKEY'), $cacheDriver)
-            )
-        );
+        $cacheDriver = new Cache(app(Repository::class));
+        return PaladinsAPI::getInstance(config('app.paladins_devid'), config('app.paladins_authkey'), $cacheDriver);
     }
 );
 ```
 
 This assumes you have two environment variables `PALADINS_DEVID` and `PALADINS_AUTHKEY`.
-You can edit this however you like. You use it by calling `App::make(PaladinsAPI:.class)` and then use it just like a normal instance of a class.
+You can edit this however you like.
+
+Then, this is how you may use the `make` method
+
+```php
+use PaladinsDev\PHP\PaladinsAPI;
+
+$paladinsApi = $this->app->make(PaladinsAPI::class);
+```
+
+If you can't access the `$app` variable, you can use it by calling `App::make(PaladinsAPI::class)` and then use it just like a normal instance of a class.
 
 ```php
 use PaladinsDev\PHP\PaladinsAPI;
