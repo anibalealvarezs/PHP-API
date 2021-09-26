@@ -2,10 +2,12 @@
 
 namespace PaladinsDev\PHP\Exceptions;
 
+use Exception;
+
 /**
  * @codeCoverageIgnore
  */
-class SessionException extends \Exception
+class SessionException extends Exception
 {
     public function __construct($message, $code = 0, Exception $previous = null)
     {
@@ -14,6 +16,6 @@ class SessionException extends \Exception
 
     public function __toString()
     {
-        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+        return __CLASS__ . ": [$this->code]: $this->message\n";
     }
 }
