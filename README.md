@@ -1,5 +1,5 @@
 # Paladins API (PHP)
-[![Latest Stable Version](https://poser.pugx.org/paladinsdev/php-api/v/stable)](https://packagist.org/packages/paladinsdev/php-api) [![License](https://poser.pugx.org/paladinsdev/php-api/license)](https://packagist.org/packages/paladinsdev/php-api) [![Total Downloads](https://poser.pugx.org/paladinsdev/php-api/downloads)](https://packagist.org/packages/paladinsdev/php-api) [![Build Status](https://img.shields.io/travis/PaladinsDev/PHP-API.svg)](https://travis-ci.org/PaladinsDev/PHP-API)
+[![Github tag](https://badgen.net/github/tag/anibalealvarezs/PHP-API)](https://github.com/anibalealvarezs/PHP-API/tags/) [![GitHub license](https://img.shields.io/github/license/anibalealvarezs/PHP-API.svg)](https://github.com/anibalealvarezs/PHP-API/blob/master/LICENSE) [![Github all releases](https://img.shields.io/github/downloads/anibalealvarezs/PHP-API/total.svg)](https://github.com/anibalealvarezs/PHP-API/releases/) [![GitHub latest commit](https://badgen.net/github/last-commit/anibalealvarezs/PHP-API)](https://GitHub.com/anibalealvarezs/PHP-API/commit/) [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/anibalealvarezs/anibalealvarezs)
 
 ## About
 
