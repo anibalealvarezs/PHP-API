@@ -5,6 +5,25 @@
 
 This PHP package came from the need to have a well documented, functional package to help communicate with the Paladins developer API. This package is built using Laravel 5 components and has not been tested outside of that environment.
 
+## Pre-installation
+
+While this branch is not merged with ```master```, you should add the following requirement to your ```composer.json``` and the corresponding repository:
+
+```json
+{
+  "require": {
+    "halfpetal/illuminate-onoi-cache": "^1.0",
+    "paladinsdev/php-api": "dev-master"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/anibalealvarezs/PHP-API"
+    }
+  ]
+}
+```
+
 ## Installation
 
 ```sh
